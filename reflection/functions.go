@@ -49,6 +49,11 @@ func MapFieldToType(tagKey string, inputStruct any) map[string]string {
 		if strings.TrimSpace(tag) == "" {
 			continue
 		}
+		// Typically used to show that a field is supposed to be ignored.
+		// For example: Age int `json:"-"`
+		if strings.TrimSpace(tag) == "-" {
+			continue
+		}
 
 		tn := t.Field(i).Type.Name()
 		m[tag] = tn
