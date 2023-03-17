@@ -22,7 +22,7 @@ func ValidateEnvironment(input []string) error {
 
 	if len(missing) > 0 {
 		m := strings.Join(missing, ", ")
-		cause := fmt.Sprint("Missing Environment Variables: ", m)
+		cause := fmt.Sprint("missing environment variables: ", m)
 		return errors.New(cause)
 	}
 	return nil
