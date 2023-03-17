@@ -29,9 +29,10 @@ func GetFunctionName() string {
 	return last
 }
 
-func ListStructTags(key string, input any) []string {
+// MapFieldToType extracts the tag name and type belonging to each field marked with a given struct tag key.
+func MapFieldToType(tagKey string, inputStruct any) map[string]string {
 
-	t := reflect.TypeOf(input)
+	t := reflect.TypeOf(inputStruct)
 	if t == nil {
 		return nil
 	}
@@ -39,14 +40,19 @@ func ListStructTags(key string, input any) []string {
 		return nil
 	}
 
-	var tags []string
+	m := map[string]string{}
 	for i := 0; i < t.NumField(); i++ {
-		full := t.Field(i).Tag.Get(key)
+
+		full := t.Field(i).Tag.Get(tagKey)
 		split := strings.Split(full, ",")
-		if split[0] == "" {
+		tag := split[0]
+		if strings.TrimSpace(tag) == "" {
 			continue
 		}
-		tags = append(tags, split[0])
+
+		tn := t.Field(i).Type.Name()
+		m[tag] = tn
 	}
-	return tags
+
+	return m
 }
