@@ -7,6 +7,7 @@ import (
 
 // Wrap embeds the error 'e' with additional information 'i'.
 //
+//	'i' can be either a string or an error.
 //	If 'i' is an error, then any type it had will be lost.
 //	Returns 'e' if 'i' is not of type error or string.
 func Wrap(i any, e error) error {
