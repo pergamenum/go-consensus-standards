@@ -29,8 +29,8 @@ func GetFunctionName() string {
 	return last
 }
 
-// MapFieldToType extracts the tag name and type belonging to each field marked with a given struct tag key.
-func MapFieldToType(tagKey string, inputStruct any) map[string]string {
+// MapTagToType extracts the tag name and type belonging to each field marked with a given struct tag key.
+func MapTagToType(tagKey string, inputStruct any) map[string]string {
 
 	t := reflect.TypeOf(inputStruct)
 	if t == nil {

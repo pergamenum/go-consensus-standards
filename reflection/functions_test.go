@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func ExampleMapFieldToType() {
+func ExampleMapTagToType() {
 
 	type User struct {
 		ID       string    `json:"id"`
@@ -17,7 +17,7 @@ func ExampleMapFieldToType() {
 		Email    string
 	}
 
-	m := MapFieldToType("json", User{})
+	m := MapTagToType("json", User{})
 
 	fmt.Printf("[Field:%v] -> [Type:%v]\n", "id", m["id"])
 	fmt.Printf("[Field:%v] -> [Type:%v]\n", "name", m["name"])
