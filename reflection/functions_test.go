@@ -5,6 +5,25 @@ import (
 	"time"
 )
 
+func ExampleGetTypeName() {
+
+	foo := "bar"
+	result := GetTypeName(foo)
+	fmt.Println("1: foo:", result)
+
+	// Output:
+	// 1: foo: string
+}
+
+func ExampleGetFunctionName() {
+
+	// This code runs inside 'func ExampleGetFunctionName()'
+	fmt.Println("1: Result:", GetFunctionName())
+	// Output:
+	// 1: Result: ExampleGetFunctionName
+
+}
+
 func ExampleMapTagToType() {
 
 	type User struct {
