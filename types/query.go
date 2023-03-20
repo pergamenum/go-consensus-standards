@@ -20,7 +20,7 @@ type Query struct {
 func (q *Query) Validate(ttt map[string]string, otb map[string]bool) error {
 
 	if q == nil {
-		return fmt.Errorf("query was nil")
+		return fmt.Errorf("(query was nil)")
 	}
 
 	var sb strings.Builder
@@ -30,8 +30,8 @@ func (q *Query) Validate(ttt map[string]string, otb map[string]bool) error {
 		for vk := range ttt {
 			vks = append(vks, vk)
 		}
-		sb.WriteString(fmt.Sprintf("key(%v): invalid ", q.Key))
-		sb.WriteString(fmt.Sprintf("- valid keys are: (%v) ", strings.Join(vks, " ")))
+		sb.WriteString(fmt.Sprintf("(invalid key '%v' ", q.Key))
+		sb.WriteString(fmt.Sprintf("- valid keys: '%v')", strings.Join(vks, " ")))
 	} else {
 		actuallyString := t == "string"
 		_, foundString := q.Value.(string)
@@ -56,12 +56,12 @@ func (q *Query) Validate(ttt map[string]string, otb map[string]bool) error {
 				vos = append(vos, vo)
 			}
 		}
-		sb.WriteString(fmt.Sprintf("operator(%v): invalid ", q.Operator))
-		sb.WriteString(fmt.Sprintf("- valid operators are: (%v) ", strings.Join(vos, " ")))
+		sb.WriteString(fmt.Sprintf("(invalid operator '%v' ", q.Operator))
+		sb.WriteString(fmt.Sprintf("- valid operators: '%v')", strings.Join(vos, " ")))
 	}
 
 	if len(sb.String()) > 0 {
-		cause := fmt.Sprint("invalid query: ", strings.TrimSpace(sb.String()))
+		cause := fmt.Sprintf("(invalid query: %v)", strings.TrimSpace(sb.String()))
 		return fmt.Errorf(cause)
 	}
 
@@ -72,20 +72,20 @@ func (q *Query) setValueFromString(t string) error {
 
 	var sv string
 	if s, ok := q.Value.(string); !ok {
-		return fmt.Errorf("value is not of type string")
+		return fmt.Errorf("(value is not of type string)")
 	} else {
 		sv = s
 	}
 	if sv == "" {
-		return fmt.Errorf("value is empty")
+		return fmt.Errorf("(value is empty)")
 	}
 	if t == "" {
-		return fmt.Errorf("type parameter is empty")
+		return fmt.Errorf("(type parameter is empty)")
 	}
 
 	f := func(result any, err error) error {
 		if err != nil {
-			return fmt.Errorf("value(%v) is not a valid %s, info: (%s)", q.Value, t, err.Error())
+			return fmt.Errorf("(value '%v' is not a valid '%s' - info: (%s))", q.Value, t, err.Error())
 		}
 		q.Value = result
 		return nil
@@ -166,13 +166,13 @@ func (q *Query) setValueFromString(t string) error {
 	case "time":
 		result, err := time.Parse(c.QueryTimeFormat, sv)
 		if err != nil {
-			cause := fmt.Errorf("valid form is: %s", c.QueryTimeHint)
+			cause := fmt.Errorf("(valid form: '%s')", c.QueryTimeHint)
 			err = e.Wrap(cause, err)
 		}
 		return f(result, err)
 
 	default:
-		return fmt.Errorf("unsupported type(%s) with value(%v)", t, q.Value)
+		return fmt.Errorf("(unsupported type '%s' with value '%v')", t, q.Value)
 	}
 }
 
@@ -182,7 +182,7 @@ func (q *Query) FromURL(input url.Values) ([]Query, error) {
 		return []Query{}, nil
 	}
 
-	cause := "query must be q=(key),(operator),(value)"
+	cause := "(query must be q=<key>,<operator>,<value>)"
 	err := e.Wrap(cause, e.ErrBadRequest)
 
 	// Ensure that any non-conforming query is reported back as invalid.

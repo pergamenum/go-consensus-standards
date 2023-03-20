@@ -18,7 +18,7 @@ func ExampleQuery_Validate() {
 
 	q := Query{
 		Key:      "id",
-		Operator: "==",
+		Operator: "EQ",
 		// Note that value is any/string.
 		Value: "1337",
 	}

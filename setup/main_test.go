@@ -23,5 +23,5 @@ func ExampleValidateEnvironment() {
 
 	// Output:
 	// 1: Error: <nil>
-	// 2: Error: missing environment variables: BETA, GAMMA
+	// 2: Error: (missing environment variables: BETA, GAMMA)
 }

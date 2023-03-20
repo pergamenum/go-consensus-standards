@@ -9,18 +9,18 @@ import (
 func AssertAny(value *any, t string) error {
 
 	if value == nil {
-		return fmt.Errorf("pointer was nil")
+		return fmt.Errorf("(pointer was nil)")
 	}
 
 	v := *value
 
 	if v == nil {
-		return fmt.Errorf("derefence points to nil")
+		return fmt.Errorf("(derefence points to nil)")
 	}
 
 	f := func(result any, ok bool) error {
 		if !ok {
-			return fmt.Errorf("value[%v] is not a valid %s", v, t)
+			return fmt.Errorf("(value '%v' is not a valid '%s')", v, t)
 		} else {
 			*value = result
 			return nil
@@ -106,6 +106,6 @@ func AssertAny(value *any, t string) error {
 		return f(result, ok)
 
 	default:
-		return fmt.Errorf("unsupported type[%s] with value[%v]", t, value)
+		return fmt.Errorf("(unsupported type '%s' with value '%v')", t, value)
 	}
 }
