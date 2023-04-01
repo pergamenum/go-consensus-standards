@@ -141,6 +141,24 @@ func AutoMapper(source, target any) error {
 	targetMap := mapTagToFieldIndex("mapper", target)
 	sourceMap := mapTagToFieldIndex("mapper", source)
 
+	// Peel off pointer and interface wrapper from 'any'.
+	targetField := reflect.ValueOf(&target).Elem().Elem()
+	sourceField := reflect.ValueOf(&source).Elem().Elem()
+	describe("1.1: targetField:", targetField)
+	describe("1.2: sourceField:", sourceField)
+
+	// Check that target struct is passed by pointer.
+	if targetField.Kind() != reflect.Pointer {
+		return fmt.Errorf("target must be passed by pointer")
+	}
+
+	// Peel off pointer and check that it is a struct.
+	targetField = targetField.Elem()
+	describe("1.3: targetField:", targetField)
+	if targetField.Kind() != reflect.Struct {
+		return fmt.Errorf("target must be a struct")
+	}
+
 	for k := range sourceMap {
 
 		sourceIndex := sourceMap[k]
@@ -149,29 +167,13 @@ func AutoMapper(source, target any) error {
 			continue
 		}
 
-		// Peel off pointer and interface wrapper from 'any'.
-		targetField := reflect.ValueOf(&target).Elem().Elem()
-		describe("1.1: targetField:", targetField)
-
-		// Assert that target struct is passed by pointer.
-		if targetField.Kind() != reflect.Pointer {
-			return fmt.Errorf("target must be passed by pointer")
-		}
-
-		// Peel off pointer and assert that it is a struct.
-		targetField = targetField.Elem()
-		describe("1.2: targetField:", targetField)
-		if targetField.Kind() != reflect.Struct {
-			return fmt.Errorf("target must be a struct")
-		}
-
 		// Pick the relevant field of the struct.
 		targetField = targetField.Field(targetIndex)
-		describe("1.3: targetField:", targetField)
+		describe("2.1: targetField:", targetField)
 
 		// Peel off pointer and interface wrapper from 'any', then pick the struct field.
-		sourceField := reflect.ValueOf(&source).Elem().Elem().Field(sourceIndex)
-		describe("2.1: sourceField:", sourceField)
+		sourceField = sourceField.Field(sourceIndex)
+		describe("2.2: sourceField:", sourceField)
 
 		// Peel off any pointers.
 		// Consider the need for checking against reflect.Interface.
@@ -179,22 +181,6 @@ func AutoMapper(source, target any) error {
 			sourceField = sourceField.Elem()
 		}
 		describe("2.3: sourceField:", sourceField)
-
-		// Match target kind by adding pointers.
-		if targetField.Kind() == reflect.Pointer {
-			if sourceField.CanAddr() {
-				// Only a Value that has a pre-existing pointer can be Addressed?
-				// That is, only a Value that has been previously peeled with .Elem()
-				sourceField = sourceField.Addr()
-			} else {
-				newPointer := reflect.New(reflect.TypeOf(sourceField.Interface()))
-				newPointer.Elem().Set(reflect.ValueOf(sourceField.Interface()))
-				sourceField = newPointer
-			}
-		}
-
-		// Set the field
-		targetField.Set(sourceField)
 
 		//if sourceField.Kind() == reflect.Struct {
 		//	aa := sourceField.Type()
@@ -209,6 +195,22 @@ func AutoMapper(source, target any) error {
 		//	//println(a)
 		//	sourceField = sourceField.Elem()
 		//}
+
+		// Match target kind by adding pointers.
+		if targetField.Kind() == reflect.Pointer {
+			if sourceField.CanAddr() {
+				// Only a Value that has a pre-existing pointer can be Addressed...?
+				// That is, only a Value that has been previously peeled with .Elem()
+				sourceField = sourceField.Addr()
+			} else {
+				newPointer := reflect.New(reflect.TypeOf(sourceField.Interface()))
+				newPointer.Elem().Set(reflect.ValueOf(sourceField.Interface()))
+				sourceField = newPointer
+			}
+		}
+
+		// Set the field
+		targetField.Set(sourceField)
 	}
 	return nil
 }
