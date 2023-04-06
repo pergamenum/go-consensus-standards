@@ -64,6 +64,16 @@ func MapTagToType(tagKey string, inputStruct any) map[string]string {
 }
 
 func AutoMapper(source, target any) error {
+	fmt.Printf("target: %p\n", &target)
+	println("target pointer:", reflect.ValueOf(&target).Pointer())
+	println("target pointer:", reflect.ValueOf(&target).Elem().Pointer())
+	println("target pointer:", reflect.ValueOf(&target).Elem().Elem().Pointer())
+	// Check that target struct is passed by pointer.
+	if reflect.ValueOf(&target).Elem().Elem().Kind() != reflect.Pointer {
+		return fmt.Errorf("target must be passed by pointer")
+	}
+
+	target = reflect.New(reflect.ValueOf(&target).Elem().Elem().Type().Elem()).Interface()
 
 	// If multiple fields have the same tag name, then only the index of the last field will be included in the map.
 	//targetMap := mapTagToFieldIndex("mapper", target)
@@ -80,12 +90,20 @@ func AutoMapper(source, target any) error {
 	sourceMap := mapTagToFieldIndex("mapper", source)
 
 	// Check that target struct is passed by pointer.
-	if targetField.Kind() != reflect.Pointer {
-		return fmt.Errorf("target must be passed by pointer")
-	}
+	//if targetField.Kind() != reflect.Pointer {
+	//	return fmt.Errorf("target must be passed by pointer")
+	//}
+	// Overwrite whatever the old pointer was with a fresh one.
+	// This is supposed to simplify cases where target is a nil pointer to a struct.
+	//targetField = reflect.New(targetField.Type().Elem())
+
+	//println("targetField.IsValid():", targetField.IsValid())
+	//println("targetField.IsNil():", targetField.IsNil())
 
 	// Peel off pointer and check that it is a struct.
 	targetField = targetField.Elem()
+	println("targetField.IsValid():", targetField.IsValid())
+
 	describe("1.3: targetField:", targetField)
 
 	if targetField.Kind() == reflect.Interface {
@@ -108,6 +126,10 @@ func AutoMapper(source, target any) error {
 		targetField = targetField.Field(targetIndex)
 		describe("2.1: targetField:", targetField)
 
+		if targetField.Kind() == reflect.Pointer {
+			println(targetField.IsNil())
+		}
+
 		// Peel off pointer and interface wrapper from 'any', then pick the struct field.
 
 		// Peel off any pointers.
@@ -118,7 +140,7 @@ func AutoMapper(source, target any) error {
 		sourceField = sourceField.Field(sourceIndex)
 		describe("2.2: sourceField:", sourceField)
 
-		if targetField.Kind() == reflect.Struct {
+		if sourceField.Kind() == reflect.Struct {
 
 			//if targetField.CanAddr() {
 			//	Only a Value that has a pre-existing pointer can be Addressed...?
@@ -130,7 +152,15 @@ func AutoMapper(source, target any) error {
 			//	targetField = newPointer
 			//}
 
-			err := AutoMapper(sourceField.Interface(), targetField.Addr().Interface())
+			describe("X1:", targetField)
+
+			if targetField.Kind() != reflect.Pointer {
+				targetField = targetField.Addr()
+				describe("X2:", targetField)
+			}
+
+			//err := AutoMapper(sourceField.Interface(), targetField.Addr().Interface())
+			err := AutoMapper(sourceField.Interface(), targetField.Interface())
 			if err != nil {
 				fmt.Println(err)
 			} else {
@@ -179,7 +209,6 @@ func AutoMapper(source, target any) error {
 }
 
 func describe(name string, input reflect.Value) {
-
 	description := fmt.Sprintf("Type: %v, Kind: %v", input.Type(), input.Kind())
 	fmt.Printf("[%s] -> %s\n", name, description)
 }
