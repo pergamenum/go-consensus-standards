@@ -224,45 +224,53 @@ func Test_AutoMapper_Nested_Value_Pointer(t *testing.T) {
 	}
 }
 
-type Alpha struct {
-	NestedOnce Beta `automap:"nested"`
-	//Info string `automap:"info"`
-}
+func TestAutoMap_Nested(t *testing.T) {
 
-type Beta struct {
-	NestedTwice Gamma
-	//Info string `automap:"info"`
-}
+	type Gamma struct {
+		Info string `automap:"info"`
+	}
 
-type Gamma struct {
-	Info string `automap:"info"`
-}
+	type Beta struct {
+		NestedTwice Gamma  `automap:"twice"`
+		Info        string `automap:"info"`
+	}
 
-type Foo struct {
-	NestedOnce Bar `automap:"nested"`
-	//Info   string `automap:"info"`
-}
+	type Alpha struct {
+		NestedOnce Beta   `automap:"once"`
+		Info       string `automap:"info"`
+	}
 
-type Bar struct {
-	NestedTwice Baz
-	//Info string `automap:"info"`
-}
+	type Baz struct {
+		Info string `automap:"info"`
+	}
 
-type Baz struct {
-	Info string `automap:"info"`
-}
+	type Bar struct {
+		NestedTwice Baz    `automap:"twice"`
+		Info        string `automap:"info"`
+	}
 
-func TestAutoMap(t *testing.T) {
+	type Foo struct {
+		NestedOnce Bar `automap:"once"`
+		Info       int `automap:"info"`
+	}
 
 	g := Gamma{"Hello from Gamma!"}
-	b := Beta{g}
-	a := Alpha{b}
+	b := Beta{
+		NestedTwice: g,
+		Info:        "Hello from Beta!",
+	}
+	a := Alpha{
+		NestedOnce: b,
+		Info:       "Hello from Alpha!",
+	}
 
 	f, err := AutoMap[Foo](a)
 	if err != nil {
 		fmt.Println(err)
 		t.Fail()
 	} else {
+		fmt.Println("Foo.Info:", f.Info)
+		fmt.Println("Foo.NestedOnce.Info:", f.NestedOnce.Info)
 		fmt.Println("Foo.NestedOnce.NestedTwice.Info:", f.NestedOnce.NestedTwice.Info)
 	}
 }
@@ -301,28 +309,40 @@ func autoMap(s, t reflect.Value) error {
 	describe("1.1: sourceStruct", s)
 	describe("1.2: targetStruct", t)
 
-	sourceField := s.Field(0)
-	targetField := t.Field(0)
-	describe("2.1: sourceField", sourceField)
-	describe("2.2: targetField", targetField)
+	sourceMap := mapTagToFieldIndex("automap", s.Interface())
+	targetMap := mapTagToFieldIndex("automap", t.Interface())
 
-	if sourceField.Kind() != targetField.Kind() {
-		cause := fmt.Errorf(
-			"(source and target kind mismatch - source: '%s', target: '%s')",
-			sourceField.Kind(), targetField.Kind(),
-		)
-		return cause
-	}
+	for k := range sourceMap {
 
-	if sourceField.Kind() == reflect.Struct {
-		err := autoMap(sourceField, targetField)
-		if err != nil {
-			return err
+		sourceIndex := sourceMap[k]
+		targetIndex, found := targetMap[k]
+		if !found {
+			continue
 		}
-		return nil
-	}
 
-	targetField.Set(sourceField)
+		sourceField := s.Field(sourceIndex)
+		targetField := t.Field(targetIndex)
+		describe("2.1: sourceField", sourceField)
+		describe("2.2: targetField", targetField)
+
+		if sourceField.Kind() != targetField.Kind() {
+			cause := fmt.Errorf(
+				"(source and target kind mismatch - source: '%s', target: '%s')",
+				sourceField.Kind(), targetField.Kind(),
+			)
+			return cause
+		}
+
+		if sourceField.Kind() == reflect.Struct {
+			err := autoMap(sourceField, targetField)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		targetField.Set(sourceField)
+	}
 
 	return nil
 }
