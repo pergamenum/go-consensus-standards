@@ -11,7 +11,5 @@ type Controller[C any] interface {
 }
 
 type ControllerMapper[Model, DTO any] interface {
-	ToDTO(Model) DTO
-	FromDTO(DTO) Model
 	ToUpdate(DTO) t.Update
 }

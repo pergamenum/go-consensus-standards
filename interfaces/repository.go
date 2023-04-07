@@ -13,11 +13,3 @@ type Repository[Model any] interface {
 	Delete(ctx context.Context, id string) error
 	Search(ctx context.Context, query []t.Query) ([]Model, error)
 }
-
-// RepositoryMapper
-//
-//	DU = DAO Update
-type RepositoryMapper[Model, Entity any] interface {
-	ToEntity(Model) Entity
-	FromEntity(Entity) Model
-}
