@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+func sp(input string) *string {
+	return &input
+}
+
 func Test_AutoMap_Field_Value_Value(t *testing.T) {
 
 	type Source struct {
@@ -424,4 +428,88 @@ func Test_AutoMap_Struct_Recursive(t *testing.T) {
 		fmt.Println("AutoMap failed to set value while returning no error.")
 		t.Fail()
 	}
+}
+
+func Test_AutoMap_Struct_Nested(t *testing.T) {
+
+	type Gamma struct {
+		Info string `automap:"info"`
+	}
+
+	type Beta struct {
+		NestedTwice Gamma  `automap:"twice"`
+		Info        string `automap:"info"`
+	}
+
+	type Alpha struct {
+		NestedOnce Beta   `automap:"once"`
+		Info       string `automap:"info"`
+	}
+
+	type Baz struct {
+		Info string `automap:"info"`
+	}
+
+	type Bar struct {
+		NestedTwice Baz    `automap:"twice"`
+		Info        string `automap:"info"`
+	}
+
+	type Foo struct {
+		NestedOnce Bar    `automap:"once"`
+		Info       string `automap:"info"`
+	}
+
+	g := Gamma{"Hello from Gamma!"}
+	b := Beta{
+		NestedTwice: g,
+		Info:        "Hello from Beta!",
+	}
+	a := Alpha{
+		NestedOnce: b,
+		Info:       "Hello from Alpha!",
+	}
+
+	f, err := AutoMap[Foo](a)
+	if err != nil {
+		fmt.Println(err)
+		t.Fail()
+	} else {
+		fmt.Println("Foo.Info:", f.Info)
+		fmt.Println("Foo.NestedOnce.Info:", f.NestedOnce.Info)
+		fmt.Println("Foo.NestedOnce.NestedTwice.Info:", f.NestedOnce.NestedTwice.Info)
+	}
+}
+
+func Test_AutoMap_Error_Bad_Input(t *testing.T) {
+
+	type ValidSource struct {
+		Info string `automap:"info"`
+	}
+
+	type ValidTarget struct {
+		Info string `automap:"info"`
+	}
+
+	validSource := ValidSource{Info: "I'm very valid!"}
+
+	var err error
+	_, err = AutoMap[ValidTarget](1337)
+	if err == nil {
+		fmt.Println("AutoMap should not allow non-struct source input.")
+		t.Fail()
+	}
+
+	_, err = AutoMap[string](validSource)
+	if err == nil {
+		fmt.Println("AutoMap should not allow non-struct type parameters.")
+		t.Fail()
+	}
+
+	_, err = AutoMap[*ValidTarget](validSource)
+	if err == nil {
+		fmt.Println("AutoMap should not allow pointer type parameters.")
+		t.Fail()
+	}
+
 }

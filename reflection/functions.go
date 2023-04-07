@@ -219,8 +219,7 @@ func mapTagToFieldIndex(tagKey string, inputStruct any) map[string]int {
 	if t == nil {
 		return nil
 	}
-	// TODO: Roll pointerface peeler into a single for.
-	if t.Kind() == reflect.Pointer {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
