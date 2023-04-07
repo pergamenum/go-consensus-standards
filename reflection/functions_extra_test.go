@@ -325,6 +325,7 @@ func autoMap(s, t reflect.Value) error {
 		describe("2.1: sourceField", sourceField)
 		describe("2.2: targetField", targetField)
 
+		// TODO: check against all nillable types.
 		// Nothing to do when source is nil.
 		if sourceField.Kind() == reflect.Pointer && sourceField.IsNil() {
 			continue
@@ -344,14 +345,14 @@ func autoMap(s, t reflect.Value) error {
 				// That is, only a Value that has been previously peeled with .Elem()
 				sourceField = sourceField.Addr()
 			} else {
-				newPointer := reflect.New(reflect.TypeOf(sourceField.Interface()))
-				newPointer.Elem().Set(reflect.ValueOf(sourceField.Interface()))
-				sourceField = newPointer
+				temp := reflect.New(reflect.TypeOf(sourceField.Interface()))
+				temp.Elem().Set(reflect.ValueOf(sourceField.Interface()))
+				sourceField = temp
 			}
 		}
 
 		if sourceField.Kind() == reflect.Struct {
-			err := autoMap(sourceField, targetField)
+			err = autoMap(sourceField, targetField)
 			if err != nil {
 				return err
 			}
