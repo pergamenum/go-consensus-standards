@@ -325,12 +325,26 @@ func autoMap(s, t reflect.Value) error {
 		describe("2.1: sourceField", sourceField)
 		describe("2.2: targetField", targetField)
 
-		if sourceField.Kind() != targetField.Kind() {
-			cause := fmt.Errorf(
-				"(source and target kind mismatch - source: '%s', target: '%s')",
-				sourceField.Kind(), targetField.Kind(),
-			)
-			return cause
+		//checkNils(sourceField, targetField)
+
+		err := compareKind(sourceField, targetField)
+		if err != nil {
+			return err
+		}
+		describe("7: target", sourceField)
+		describe("8: target", targetField)
+
+		// Match target kind by adding pointers.
+		if targetField.Kind() == reflect.Pointer {
+			if sourceField.CanAddr() {
+				// Only a Value that has a pre-existing pointer can be Addressed...?
+				// That is, only a Value that has been previously peeled with .Elem()
+				sourceField = sourceField.Addr()
+			} else {
+				newPointer := reflect.New(reflect.TypeOf(sourceField.Interface()))
+				newPointer.Elem().Set(reflect.ValueOf(sourceField.Interface()))
+				sourceField = newPointer
+			}
 		}
 
 		if sourceField.Kind() == reflect.Struct {
@@ -342,6 +356,42 @@ func autoMap(s, t reflect.Value) error {
 		}
 
 		targetField.Set(sourceField)
+	}
+
+	return nil
+}
+
+func compareKind(source, target reflect.Value) error {
+
+	describe("5.1: source", source)
+	for source.Kind() == reflect.Pointer {
+		if source.IsNil() {
+			// Guard against calling .Elem() on a zero value.
+		} else {
+			source = source.Elem()
+		}
+	}
+	describe("5.2: source", source)
+	// TODO: Case for when both source and target are nil.
+	describe("6.1: target", target)
+	for target.Kind() == reflect.Pointer {
+		if target.IsNil() {
+			temp := reflect.New(reflect.TypeOf(source.Interface()))
+			temp.Elem().Set(reflect.ValueOf(source.Interface()))
+			describe("6.3: target", temp)
+			target.Set(temp)
+		} else {
+			target = target.Elem()
+		}
+	}
+	describe("6.2: target", target)
+
+	if source.Kind() != target.Kind() {
+		cause := fmt.Errorf(
+			"(source and target kind mismatch - source: '%s', target: '%s')",
+			source.Kind(), target.Kind(),
+		)
+		return cause
 	}
 
 	return nil
