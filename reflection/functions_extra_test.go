@@ -335,11 +335,13 @@ func autoMap(s, t reflect.Value) error {
 		if err != nil {
 			return err
 		}
-		describe("7: target", sourceField)
-		describe("8: target", targetField)
+		describe("7: sourceField", sourceField)
+		describe("8: targetField", targetField)
 
 		// Match target kind by adding pointers.
-		if targetField.Kind() == reflect.Pointer && sourceField.Kind() != reflect.Pointer {
+		if targetField.Kind() == reflect.Pointer &&
+			sourceField.Kind() != reflect.Pointer &&
+			sourceField.Kind() != reflect.Struct {
 			if sourceField.CanAddr() {
 				// Only a Value that has a pre-existing pointer can be Addressed...?
 				// That is, only a Value that has been previously peeled with .Elem()
@@ -350,8 +352,15 @@ func autoMap(s, t reflect.Value) error {
 				sourceField = temp
 			}
 		}
+		describe("9: sourceField", sourceField)
 
+		// TODO: Set up conditional for when target is pStruct while value is Struct.
 		if sourceField.Kind() == reflect.Struct {
+
+			for targetField.Kind() == reflect.Pointer {
+				targetField = targetField.Elem()
+			}
+
 			err = autoMap(sourceField, targetField)
 			if err != nil {
 				return err
@@ -381,10 +390,7 @@ func compareKind(source, target reflect.Value) error {
 	describe("6.1: target", target)
 	for target.Kind() == reflect.Pointer {
 		if target.IsNil() {
-			temp := reflect.New(reflect.TypeOf(source.Interface()))
-			temp.Elem().Set(reflect.ValueOf(source.Interface()))
-			describe("6.3: target", temp)
-			target.Set(temp)
+			target.Set(reflect.New(target.Type().Elem()))
 		} else {
 			target = target.Elem()
 		}
