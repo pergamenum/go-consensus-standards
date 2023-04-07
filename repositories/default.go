@@ -4,32 +4,33 @@ import (
 	"context"
 
 	i "github.com/pergamenum/go-consensus-standards/interfaces"
+	"github.com/pergamenum/go-consensus-standards/reflection"
 	t "github.com/pergamenum/go-consensus-standards/types"
 )
 
 type Repo[M any, E any] struct {
-	dao    i.DAO[E]
-	mapper i.RepositoryMapper[M, E]
+	dao i.DAO[E]
 }
 
 type RepoConfig[M any, E any] struct {
-	DAO    i.DAO[E]
-	Mapper i.RepositoryMapper[M, E]
+	DAO i.DAO[E]
 }
 
 func NewRepo[M any, E any](conf RepoConfig[M, E]) *Repo[M, E] {
 
 	return &Repo[M, E]{
-		mapper: conf.Mapper,
-		dao:    conf.DAO,
+		dao: conf.DAO,
 	}
 }
 
 func (r *Repo[M, E]) Create(ctx context.Context, id string, model M) error {
 
-	entity := r.mapper.ToEntity(model)
+	entity, err := reflection.AutoMap[E](model)
+	if err != nil {
+		return err
+	}
 
-	err := r.dao.Create(ctx, id, entity)
+	err = r.dao.Create(ctx, id, entity)
 	if err != nil {
 		return err
 	}
@@ -37,15 +38,17 @@ func (r *Repo[M, E]) Create(ctx context.Context, id string, model M) error {
 	return nil
 }
 
-func (r *Repo[M, E]) Read(ctx context.Context, id string) (M, error) {
+func (r *Repo[M, E]) Read(ctx context.Context, id string) (model M, err error) {
 
 	entity, err := r.dao.Read(ctx, id)
 	if err != nil {
-		var empty M
-		return empty, err
+		return model, err
 	}
 
-	model := r.mapper.FromEntity(entity)
+	model, err = reflection.AutoMap[M](entity)
+	if err != nil {
+		return model, err
+	}
 
 	return model, nil
 }
@@ -83,7 +86,10 @@ func (r *Repo[M, E]) Search(ctx context.Context, query []t.Query) ([]M, error) {
 
 	var ms []M
 	for _, e := range es {
-		m := r.mapper.FromEntity(e)
+		m, err := reflection.AutoMap[M](e)
+		if err != nil {
+			return nil, err
+		}
 		ms = append(ms, m)
 	}
 
