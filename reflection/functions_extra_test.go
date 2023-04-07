@@ -355,6 +355,10 @@ func autoMap(s, t reflect.Value) error {
 			continue
 		}
 
+		if sourceField.Kind() == reflect.Pointer && targetField.Kind() != reflect.Pointer {
+			sourceField = sourceField.Elem()
+		}
+
 		targetField.Set(sourceField)
 	}
 
