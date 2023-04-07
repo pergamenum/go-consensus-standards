@@ -379,3 +379,49 @@ func Test_AutoMap_Struct_NilPointer_Pointer(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func Test_AutoMap_Struct_Recursive(t *testing.T) {
+
+	type Source struct {
+		Nested *Source `automap:"nested"`
+		Info   string  `automap:"info"`
+	}
+
+	type Target struct {
+		Nested *Target `automap:"nested"`
+		Info   string  `automap:"info"`
+	}
+
+	bottom := Source{
+		Nested: nil,
+		Info:   "Bottom",
+	}
+
+	middle := Source{
+		Nested: &bottom,
+		Info:   "Middle",
+	}
+
+	source := Source{
+		Nested: &middle,
+		Info:   "Top",
+	}
+
+	target, err := AutoMap[Target](source)
+	if err != nil {
+		fmt.Println(err)
+		t.Fail()
+	}
+	if source.Info != target.Info {
+		fmt.Println("AutoMap failed to set value while returning no error.")
+		t.Fail()
+	}
+	if source.Nested.Info != target.Nested.Info {
+		fmt.Println("AutoMap failed to set value while returning no error.")
+		t.Fail()
+	}
+	if source.Nested.Nested.Info != target.Nested.Nested.Info {
+		fmt.Println("AutoMap failed to set value while returning no error.")
+		t.Fail()
+	}
+}
