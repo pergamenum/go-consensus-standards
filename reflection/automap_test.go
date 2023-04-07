@@ -269,3 +269,113 @@ func Test_AutoMap_Struct_Pointer_Value(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func Test_AutoMap_Struct_Pointer_Pointer(t *testing.T) {
+
+	type Foo struct {
+		Info string `automap:"info"`
+	}
+
+	type Source struct {
+		Nested *Foo `automap:"nested"`
+	}
+
+	type Bar struct {
+		Info string `automap:"info"`
+	}
+
+	type Target struct {
+		Nested *Bar `automap:"nested"`
+	}
+
+	foo := Foo{
+		Info: "Hello from Foo!",
+	}
+
+	source := Source{
+		Nested: &foo,
+	}
+
+	target, err := AutoMap[Target](source)
+	if err != nil {
+		fmt.Println(err)
+		t.Fail()
+	}
+	if source.Nested.Info != target.Nested.Info {
+		fmt.Println("AutoMap failed to set value while returning no error.")
+		t.Fail()
+	}
+}
+
+func Test_AutoMap_Struct_NilPointer_Value(t *testing.T) {
+
+	type Foo struct {
+		Info string `automap:"info"`
+	}
+
+	type Source struct {
+		Nested *Foo `automap:"nested"`
+	}
+
+	type Bar struct {
+		Info string `automap:"info"`
+	}
+
+	type Target struct {
+		Nested Bar `automap:"nested"`
+	}
+
+	source := Source{}
+
+	target, err := AutoMap[Target](source)
+	if err != nil {
+		fmt.Println(err)
+		t.Fail()
+	}
+	if source.Nested != nil {
+		fmt.Println("AutoMap should not set source values.")
+		t.Fail()
+	}
+
+	empty := Bar{}
+	if target.Nested != empty {
+		fmt.Println("Unexpected value set.")
+		t.Fail()
+	}
+}
+
+func Test_AutoMap_Struct_NilPointer_Pointer(t *testing.T) {
+
+	type Foo struct {
+		Info string `automap:"info"`
+	}
+
+	type Source struct {
+		Nested *Foo `automap:"nested"`
+	}
+
+	type Bar struct {
+		Info string `automap:"info"`
+	}
+
+	type Target struct {
+		Nested *Bar `automap:"nested"`
+	}
+
+	source := Source{}
+
+	target, err := AutoMap[Target](source)
+	if err != nil {
+		fmt.Println(err)
+		t.Fail()
+	}
+	if source.Nested != nil {
+		fmt.Println("AutoMap should not set source values.")
+		t.Fail()
+	}
+
+	if target.Nested != nil {
+		fmt.Println("Unexpected value set.")
+		t.Fail()
+	}
+}
