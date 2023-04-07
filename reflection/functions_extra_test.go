@@ -325,6 +325,10 @@ func autoMap(s, t reflect.Value) error {
 		describe("2.1: sourceField", sourceField)
 		describe("2.2: targetField", targetField)
 
+		for sourceField.Kind() == reflect.Pointer && !sourceField.IsNil() {
+			sourceField = sourceField.Elem()
+		}
+
 		// TODO: check against all nillable types.
 		// Nothing to do when source is nil.
 		if sourceField.Kind() == reflect.Pointer && sourceField.IsNil() {
