@@ -58,3 +58,22 @@ func ExampleMapTagToType() {
 	// [Field:Password] -> [Found:false]
 	// [Field:Email] -> [Found:false]
 }
+
+func ExampleAutoMap() {
+
+	type Alpha struct {
+		ThisName string `automap:"name"`
+	}
+	type Beta struct {
+		ThatName string `automap:"name"`
+	}
+	a := Alpha{"Jeff"}
+	b, err := AutoMap[Beta](a)
+	if err != nil {
+		// Handle err
+	}
+	fmt.Println(b.ThatName)
+
+	// Output:
+	// Jeff
+}

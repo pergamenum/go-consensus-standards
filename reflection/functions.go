@@ -63,56 +63,41 @@ func MapTagToType(tagKey string, inputStruct any) map[string]string {
 	return m
 }
 
-func AutoMapper(source, target any) error {
-	fmt.Printf("target: %p\n", &target)
-	println("target pointer:", reflect.ValueOf(&target).Pointer())
-	println("target pointer:", reflect.ValueOf(&target).Elem().Pointer())
-	println("target pointer:", reflect.ValueOf(&target).Elem().Elem().Pointer())
-	// Check that target struct is passed by pointer.
-	if reflect.ValueOf(&target).Elem().Elem().Kind() != reflect.Pointer {
-		return fmt.Errorf("target must be passed by pointer")
+func AutoMap[T any](source any) (target T, err error) {
+
+	// Peel the source until we reach the struct.
+	sourceStruct := reflect.ValueOf(&source)
+	for sourceStruct.Kind() == reflect.Pointer || sourceStruct.Kind() == reflect.Interface {
+		sourceStruct = sourceStruct.Elem()
 	}
 
-	target = reflect.New(reflect.ValueOf(&target).Elem().Elem().Type().Elem()).Interface()
+	targetKind := reflect.ValueOf(target).Kind()
 
-	// If multiple fields have the same tag name, then only the index of the last field will be included in the map.
-	//targetMap := mapTagToFieldIndex("mapper", target)
-	//sourceMap := mapTagToFieldIndex("mapper", source)
-
-	// Peel off pointer and interface wrapper from 'any'.
-	targetField := reflect.ValueOf(&target).Elem().Elem()
-	sourceField := reflect.ValueOf(&source).Elem().Elem()
-	describe("1.1: targetField:", targetField)
-	describe("1.2: sourceField:", sourceField)
-
-	// If multiple fields have the same tag name, then only the index of the last field will be included in the map.
-	targetMap := mapTagToFieldIndex("mapper", target)
-	sourceMap := mapTagToFieldIndex("mapper", source)
-
-	// Check that target struct is passed by pointer.
-	//if targetField.Kind() != reflect.Pointer {
-	//	return fmt.Errorf("target must be passed by pointer")
-	//}
-	// Overwrite whatever the old pointer was with a fresh one.
-	// This is supposed to simplify cases where target is a nil pointer to a struct.
-	//targetField = reflect.New(targetField.Type().Elem())
-
-	//println("targetField.IsValid():", targetField.IsValid())
-	//println("targetField.IsNil():", targetField.IsNil())
-
-	// Peel off pointer and check that it is a struct.
-	targetField = targetField.Elem()
-	println("targetField.IsValid():", targetField.IsValid())
-
-	describe("1.3: targetField:", targetField)
-
-	if targetField.Kind() == reflect.Interface {
-		targetField = targetField.Elem()
+	// Validate the input.
+	if targetKind == reflect.Pointer {
+		cause := fmt.Errorf("(pointers are not allowed as a type parameter)")
+		return target, cause
+	}
+	if sourceStruct.Kind() != reflect.Struct {
+		cause := fmt.Errorf("(source must be a struct, got: '%s')", sourceStruct.Kind().String())
+		return target, cause
+	}
+	if targetKind != reflect.Struct {
+		cause := fmt.Errorf("(target must be a struct, got: '%s')", targetKind.String())
+		return target, cause
 	}
 
-	if targetField.Kind() != reflect.Struct {
-		return fmt.Errorf("target must be a struct")
-	}
+	targetStruct := reflect.ValueOf(&target).Elem()
+
+	// Enter the recursive part.
+	err = autoMap(sourceStruct, targetStruct)
+	return target, err
+}
+
+func autoMap(s, t reflect.Value) error {
+
+	sourceMap := mapTagToFieldIndex("automap", s.Interface())
+	targetMap := mapTagToFieldIndex("automap", t.Interface())
 
 	for k := range sourceMap {
 
@@ -122,95 +107,72 @@ func AutoMapper(source, target any) error {
 			continue
 		}
 
-		// Pick the relevant field of the struct.
-		targetField = targetField.Field(targetIndex)
-		describe("2.1: targetField:", targetField)
+		// Pick out the matching fields from the structs.
+		sourceField := s.Field(sourceIndex)
+		targetField := t.Field(targetIndex)
 
-		if targetField.Kind() == reflect.Pointer {
-			println(targetField.IsNil())
-		}
-
-		// Peel off pointer and interface wrapper from 'any', then pick the struct field.
-
-		// Peel off any pointers.
-		// Consider the need for checking against reflect.Interface.
-		for sourceField.Kind() == reflect.Pointer {
+		// Peel off pointers to the source struct's current field.
+		for sourceField.Kind() == reflect.Pointer && !sourceField.IsNil() {
 			sourceField = sourceField.Elem()
 		}
-		sourceField = sourceField.Field(sourceIndex)
-		describe("2.2: sourceField:", sourceField)
 
+		// Nothing to do when the source is nil.
+		if nillable(sourceField) && sourceField.IsNil() {
+			continue
+		}
+
+		// Prepare the target field when it's nil and needs to be used.
+		if nillable(targetField) && targetField.IsNil() {
+			targetField.Set(reflect.New(targetField.Type().Elem()))
+		}
+
+		// Peel off pointers to the target struct's current field.
+		for targetField.Kind() == reflect.Pointer && !targetField.IsNil() {
+			targetField = targetField.Elem()
+		}
+
+		// Assert that the fields match.
+		if sourceField.Kind() != targetField.Kind() {
+			cause := fmt.Errorf(
+				"(source and target kind mismatch - source: '%s', target: '%s')",
+				sourceField.Kind(), targetField.Kind(),
+			)
+			return cause
+		}
+
+		// Recurse into nested structs.
 		if sourceField.Kind() == reflect.Struct {
-
-			//if targetField.CanAddr() {
-			//	Only a Value that has a pre-existing pointer can be Addressed...?
-			//	That is, only a Value that has been previously peeled with .Elem()
-			//targetField = targetField.Addr()
-			//} else {
-			//	newPointer := reflect.New(reflect.TypeOf(targetField.Interface()))
-			//	newPointer.Elem().Set(reflect.ValueOf(targetField.Interface()))
-			//	targetField = newPointer
-			//}
-
-			describe("X1:", targetField)
-
-			if targetField.Kind() != reflect.Pointer {
-				targetField = targetField.Addr()
-				describe("X2:", targetField)
-			}
-
-			//err := AutoMapper(sourceField.Interface(), targetField.Addr().Interface())
-			err := AutoMapper(sourceField.Interface(), targetField.Interface())
+			err := autoMap(sourceField, targetField)
 			if err != nil {
-				fmt.Println(err)
-			} else {
-				continue
+				return err
 			}
+			continue
 		}
 
-		// Peel off any pointers.
-		// Consider the need for checking against reflect.Interface.
-		for sourceField.Kind() == reflect.Pointer {
-			sourceField = sourceField.Elem()
-		}
-		describe("2.3: sourceField:", sourceField)
-
-		//if sourceField.Kind() == reflect.Struct {
-		//	aa := sourceField.Type()
-		//	x := reflect.ValueOf(&source).Elem().Field(sourceIndex)
-		//	y := reflect.TypeOf(&source).Elem().Field(sourceIndex)
-		//	xI := x.Interface()
-		//	println(xI)
-		//	println(x.String())
-		//	println(y.Type.String())
-		//	tempy(xI, aa)
-		//	//a, _ := AutoMapper[aa, xI](xI)
-		//	//println(a)
-		//	sourceField = sourceField.Elem()
-		//}
-
-		// Match target kind by adding pointers.
-		if targetField.Kind() == reflect.Pointer {
-			if sourceField.CanAddr() {
-				// Only a Value that has a pre-existing pointer can be Addressed...?
-				// That is, only a Value that has been previously peeled with .Elem()
-				sourceField = sourceField.Addr()
-			} else {
-				newPointer := reflect.New(reflect.TypeOf(sourceField.Interface()))
-				newPointer.Elem().Set(reflect.ValueOf(sourceField.Interface()))
-				sourceField = newPointer
-			}
-		}
-
-		// Set the field
 		targetField.Set(sourceField)
 	}
+
 	return nil
 }
 
-func describe(name string, input reflect.Value) {
-	description := fmt.Sprintf("Type: %v, Kind: %v", input.Type(), input.Kind())
-	fmt.Printf("[%s] -> %s\n", name, description)
+func nillable(input reflect.Value) (nillable bool) {
+
+	switch input.Kind() {
+	case reflect.Chan:
+		nillable = true
+	case reflect.Func:
+		nillable = true
+	case reflect.Interface:
+		nillable = true
+	case reflect.Map:
+		nillable = true
+	case reflect.Pointer:
+		nillable = true
+	case reflect.Slice:
+		nillable = true
+	}
+
+	return nillable
 }
 
 func mapTagToFieldIndex(tagKey string, inputStruct any) map[string]int {

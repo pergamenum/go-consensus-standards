@@ -474,10 +474,15 @@ func Test_AutoMap_Struct_Nested(t *testing.T) {
 	if err != nil {
 		fmt.Println(err)
 		t.Fail()
-	} else {
-		fmt.Println("Foo.Info:", f.Info)
-		fmt.Println("Foo.NestedOnce.Info:", f.NestedOnce.Info)
-		fmt.Println("Foo.NestedOnce.NestedTwice.Info:", f.NestedOnce.NestedTwice.Info)
+	}
+	if f.Info != a.Info {
+		t.Fail()
+	}
+	if f.NestedOnce.Info != a.NestedOnce.Info {
+		t.Fail()
+	}
+	if f.NestedOnce.NestedTwice.Info != a.NestedOnce.NestedTwice.Info {
+		t.Fail()
 	}
 }
 
