@@ -325,7 +325,10 @@ func autoMap(s, t reflect.Value) error {
 		describe("2.1: sourceField", sourceField)
 		describe("2.2: targetField", targetField)
 
-		//checkNils(sourceField, targetField)
+		// Nothing to do when source is nil.
+		if sourceField.Kind() == reflect.Pointer && sourceField.IsNil() {
+			continue
+		}
 
 		err := compareKind(sourceField, targetField)
 		if err != nil {
@@ -369,14 +372,11 @@ func compareKind(source, target reflect.Value) error {
 
 	describe("5.1: source", source)
 	for source.Kind() == reflect.Pointer {
-		if source.IsNil() {
-			// Guard against calling .Elem() on a zero value.
-		} else {
-			source = source.Elem()
-		}
+		source = source.Elem()
 	}
 	describe("5.2: source", source)
-	// TODO: Case for when both source and target are nil.
+
+	// TODO: Extract setting nil targets into seperate function called before compareKind.
 	describe("6.1: target", target)
 	for target.Kind() == reflect.Pointer {
 		if target.IsNil() {

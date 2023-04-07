@@ -104,3 +104,30 @@ func Test_AutoMap_Field_Pointer_Pointer(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func Test_AutoMap_Field_NilPointer_Value(t *testing.T) {
+
+	type Source struct {
+		Info *string `automap:"info"`
+	}
+
+	type Target struct {
+		Info string `automap:"info"`
+	}
+
+	source := Source{}
+
+	target, err := AutoMap[Target](source)
+	if err != nil {
+		fmt.Println(err)
+		t.Fail()
+	}
+	if source.Info != nil {
+		fmt.Println("AutoMap should not set source values.")
+		t.Fail()
+	}
+	if target.Info != "" {
+		fmt.Println("Unexpected value set.")
+		t.Fail()
+	}
+}
