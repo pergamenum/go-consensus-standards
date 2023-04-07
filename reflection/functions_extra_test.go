@@ -335,7 +335,7 @@ func autoMap(s, t reflect.Value) error {
 		describe("8: target", targetField)
 
 		// Match target kind by adding pointers.
-		if targetField.Kind() == reflect.Pointer {
+		if targetField.Kind() == reflect.Pointer && sourceField.Kind() != reflect.Pointer {
 			if sourceField.CanAddr() {
 				// Only a Value that has a pre-existing pointer can be Addressed...?
 				// That is, only a Value that has been previously peeled with .Elem()
