@@ -140,8 +140,10 @@ func autoMap(s, t reflect.Value) error {
 			return cause
 		}
 
-		// Recurse into nested structs.
-		if sourceField.Kind() == reflect.Struct {
+		// Recurse into nested cognate structs.
+		sameType := sourceField.Type() == targetField.Type()
+		if sourceField.Kind() == reflect.Struct && !sameType {
+
 			err := autoMap(sourceField, targetField)
 			if err != nil {
 				return err

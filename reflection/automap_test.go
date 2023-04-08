@@ -3,6 +3,7 @@ package reflection
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func sp(input string) *string {
@@ -517,4 +518,28 @@ func Test_AutoMap_Error_Bad_Input(t *testing.T) {
 		t.Fail()
 	}
 
+}
+
+func Test_AutoMap_Equal_Struct_Types(t *testing.T) {
+
+	type Source struct {
+		Timestamp time.Time `automap:"timestamp"`
+	}
+
+	type Target struct {
+		Timestamp time.Time `automap:"timestamp"`
+	}
+
+	source := Source{time.Now()}
+
+	var err error
+	target, err := AutoMap[Target](source)
+	if err != nil {
+		fmt.Println(err)
+		t.Fail()
+	}
+	if source.Timestamp != target.Timestamp {
+		fmt.Println("AutoMap failed to set value while returning no error.")
+		t.Fail()
+	}
 }
