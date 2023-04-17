@@ -91,12 +91,14 @@ func Benchmark_Mapping(b *testing.B) {
 
 	s := fmt.Sprintf("manualMap_Single_L[%v]_D[%v]", l, d)
 	b.Run(s, func(b *testing.B) {
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			manualMap(as[0])
 		}
 	})
 	s = fmt.Sprintf("AutoMap_Single_L[%v]_D[%v]", l, d)
 	b.Run(s, func(b *testing.B) {
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = AutoMap[Foo](as[0])
 		}
@@ -104,6 +106,7 @@ func Benchmark_Mapping(b *testing.B) {
 
 	s = fmt.Sprintf("manualMap_Multiple_L[%v]_D[%v]", l, d)
 	b.Run(s, func(b *testing.B) {
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			for _, a := range as {
 				manualMap(a)
@@ -113,6 +116,7 @@ func Benchmark_Mapping(b *testing.B) {
 
 	s = fmt.Sprintf("AutoMapping_Multiple_L[%v]_D[%v]", l, d)
 	b.Run(s, func(b *testing.B) {
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			for _, a := range as {
 				_, _ = AutoMap[Foo](a)
@@ -125,12 +129,14 @@ func Benchmark_Mapping(b *testing.B) {
 
 	s = fmt.Sprintf("manualMap_Single_L[%v]_D[%v]", l, d)
 	b.Run(s, func(b *testing.B) {
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			manualMap(as[0])
 		}
 	})
 	s = fmt.Sprintf("AutoMap_Single_L[%v]_D[%v]", l, d)
 	b.Run(s, func(b *testing.B) {
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = AutoMap[Foo](as[0])
 		}
@@ -138,6 +144,7 @@ func Benchmark_Mapping(b *testing.B) {
 
 	s = fmt.Sprintf("manualMap_Multiple_L[%v]_D[%v]", l, d)
 	b.Run(s, func(b *testing.B) {
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			for _, a := range as {
 				manualMap(a)
@@ -147,6 +154,7 @@ func Benchmark_Mapping(b *testing.B) {
 
 	s = fmt.Sprintf("AutoMapping_Multiple_L[%v]_D[%v]", l, d)
 	b.Run(s, func(b *testing.B) {
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			for _, a := range as {
 				_, _ = AutoMap[Foo](a)
