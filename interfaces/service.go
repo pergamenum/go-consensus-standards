@@ -13,9 +13,3 @@ type Service[Model any] interface {
 	Delete(ctx context.Context, id string) error
 	Search(ctx context.Context, query []t.Query) ([]Model, error)
 }
-
-type Validator[Model any] interface {
-	ValidateModel(Model) error
-	ValidateUpdate(t.Update) error
-	ValidateQuery([]t.Query) error
-}
