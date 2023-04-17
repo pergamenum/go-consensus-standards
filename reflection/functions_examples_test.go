@@ -2,6 +2,7 @@ package reflection
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 )
 
@@ -76,4 +77,10 @@ func ExampleAutoMap() {
 
 	// Output:
 	// Jeff
+}
+
+func ExampleDescribe() {
+
+	value := reflect.ValueOf("Hello, World!")
+	Describe("1 - value:", value)
 }

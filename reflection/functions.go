@@ -117,12 +117,12 @@ func autoMap(s, t reflect.Value) error {
 		}
 
 		// Nothing to do when the source is nil.
-		if nillable(sourceField) && sourceField.IsNil() {
+		if Nillable(sourceField) && sourceField.IsNil() {
 			continue
 		}
 
 		// Prepare the target field when it's nil and needs to be used.
-		if nillable(targetField) && targetField.IsNil() {
+		if Nillable(targetField) && targetField.IsNil() {
 			targetField.Set(reflect.New(targetField.Type().Elem()))
 		}
 
@@ -157,7 +157,7 @@ func autoMap(s, t reflect.Value) error {
 	return nil
 }
 
-func nillable(input reflect.Value) (nillable bool) {
+func Nillable(input reflect.Value) (nillable bool) {
 
 	switch input.Kind() {
 	case reflect.Chan:
@@ -209,4 +209,11 @@ func mapTagToFieldIndex(tagKey string, inputStruct any) map[string]int {
 	}
 
 	return m
+}
+
+func Describe(id string, input reflect.Value) {
+
+	format := "%20s - %6s: '%s'\n"
+	fmt.Printf(format, id, "Kind", input.Kind().String())
+	fmt.Printf(format, id, "Type", input.Type().String())
 }
